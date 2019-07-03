@@ -37,8 +37,10 @@ def post_group():
 def all_groups():
     """Get method for all groups."""
     groups = GroupsModel.query.all()
-    result = jsonify(GROUPS_SCHEMA.dump(groups).data)
-    return result
+    for group in groups:
+        group.members = list(map(int, group.members.split(',')))
+    message = GROUPS_SCHEMA.jsonify(groups)
+    return message
 
 @APP.route('/api/group/<group_id>')
 def get_group(group_id):
