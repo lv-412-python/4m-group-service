@@ -8,7 +8,6 @@ from groups_service.config.dev_config import DevelopmentConfig
 
 APP.config.from_object(DevelopmentConfig)
 DB = SQLAlchemy(APP)
-# DB.metadata.clear()
 
 
 MIGRATE = Migrate(APP, DB)
