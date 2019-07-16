@@ -1,19 +1,17 @@
 '''Implementation groups_service'''
-from marshmallow import ValidationError
+from marshmallow import ValidationError, fields
 from flask_api import status
+from sqlalchemy.exc import IntegrityError
 from flask import request, jsonify, Response
 from flask_restful import Resource
+from webargs.flaskparser import parser
 from groups_service.db import DB
 from groups_service.serializers import (
     GROUP_SCHEMA,
-    GROUPS_SCHEMA
+    GROUPS_SCHEMA,
+    WORKER_SCHEMA
 )
 from groups_service.models.group import Groups, Forms
-
-
-OK = 200
-BAD_REQUEST = 400
-NOT_FOUND = 404
 
 class GroupResource(Resource):
     '''Group resource.'''
@@ -22,66 +20,70 @@ class GroupResource(Resource):
         try:
             req = GROUP_SCHEMA.load(request.json).data
         except ValidationError as err:
-            return jsonify(err.messages), status.HTTP_400_BAD_REQUEST
-        form_id = req.pop('form_id', None)
+            return err.messages, status.HTTP_400_BAD_REQUEST
+        forms_id = req.pop('assigned_to_forms', None)
+        list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
+        if list_forms:
+            req.update({'assigned_to_forms' : list_forms})
         new_group = Groups(**req)
-        if form_id:
-            form = Forms.query.get(form_id)
-            if not form:
-                return {'error': 'Form not exist'}, status.HTTP_400_BAD_REQUEST
-            new_group.forms.append(form)
         DB.session.add(new_group)
-        DB.session.commit()
-        message = {'message': 'Succsess'}, status.HTTP_201_CREATED
-        return message
+        try:
+            DB.session.commit()
+        except IntegrityError as err:
+            DB.session.rollback()
+            return {'error': 'Already exist'}, status.HTTP_400_BAD_REQUEST
+        return {'message': 'Succsess'}, status.HTTP_201_CREATED
 
-        # print(form, title, owner, members)
-
-        # try:
-        #     print('hello')
-        #     DB.session.commit()
-        # except IntegrityError as err:
-        #     DB.session.rollback()
-        #     return {'error': 'Already exist'}, status.HTTP_400_BAD_REQUEST
-        # message = {'message': 'Succsess'}, status.HTTP_201_CREATED
-        # return message
-
-    def get(self):#pylint: disable=no-self-use
+    def get(self, group_id=None):# pylint: disable=no-self-use
         '''Method get.'''
         resp = Response()
-        groups = Groups.query.join(Groups.group).filter_by(groups_id=id).all()
-        message = GROUPS_SCHEMA.dump(groups).data
-        resp = jsonify(message)
-        resp.status_code = status.HTTP_200_OK
-    #     elif owner_id and not group_id:
-    #         try:
-    #             group = GroupsModel.query.filter_by(owner_id=owner_id)
-    #             message = GROUPS_SCHEMA.dump(group).data
-    #         except DataError:
-    #             message = {'error': 'Invalid url.'}
-    #             resp = jsonify(message)
-    #             resp.status_code = status.HTTP_404_NOT_FOUND
-    #         if not message:
-    #             message = {'error': "Does not exist."}
-    #             resp = jsonify(message)
-    #             resp.status_code = status.HTTP_400_BAD_REQUEST
-    #         else:
-    #             resp = jsonify(message)
-    #             resp.status_code = status.HTTP_200_OK
-    #     else:
-    #         try:
-    #             group = GroupsModel.query.get(group_id)
-    #             print(group)
-    #         except DataError:
-    #             message = {'error': 'Invalid url.'}
-    #             resp = jsonify(message)
-    #             resp.status_code = status.HTTP_404_NOT_FOUND
-    #         if group is None:
-    #             message = {'error': "Does not exist."}
-    #             resp = jsonify(message)
-    #             resp.status_code = status.HTTP_400_BAD_REQUEST
-    #         else:
-    #             message = GROUP_SCHEMA.dump(group).data
-    #             resp = jsonify(message)
-    #             resp.status_code = status.HTTP_200_OK
+        url_args = {
+            'groups': fields.List(fields.Integer(validate=lambda val: val > 0))
+        }
+        args = parser.parse(url_args, request)
+        if args:
+            title_groups = Groups.query.with_entities(
+                Groups.id, Groups.title
+                ).filter(
+                    Groups.id.in_(args['groups'])
+                )
+            try:
+                res = WORKER_SCHEMA.dump(title_groups).data
+            except ValidationError as err:
+                return err.messages, status.HTTP_400_BAD_REQUEST
+            return res, status.HTTP_200_OK
+
+        if group_id:
+            group = Groups.query.get(group_id)
+            if group is None:
+                message = {'error': "Does not exist."}
+                resp = jsonify(message)
+                resp.status_code = status.HTTP_400_BAD_REQUEST
+            else:
+                message = GROUP_SCHEMA.dump(group).data
+                resp = jsonify(message)
+                resp.status_code = status.HTTP_200_OK
+        else:
+            groups = Groups.query.all()
+            message = GROUPS_SCHEMA.dump(groups).data
+            resp = jsonify(message)
+            resp.status_code = status.HTTP_200_OK
         return resp
+
+    def put(self, group_id):#pylint: disable=no-self-use
+        '''Method put.'''
+        updated_group = Groups.query.get(group_id)
+        if updated_group is None:
+            return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
+        try:
+            updated_data = GROUP_SCHEMA.load(request.json).data
+        except ValidationError as err:
+            return err.messages, status.HTTP_400_BAD_REQUEST
+        forms_id = updated_data.pop('assigned_to_forms', None)
+        list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
+        if list_forms:
+            updated_data.update({'assigned_to_forms' : list_forms})
+        for key, value in updated_data.items():
+            setattr(updated_group, key, value)
+        DB.session.commit()
+        return Response(status=status.HTTP_200_OK)

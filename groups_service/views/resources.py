@@ -4,4 +4,4 @@ from .groups import (
     GroupResource
 )
 
-API.add_resource(GroupResource, '/group')
+API.add_resource(GroupResource, '/group', '/group/<int:group_id>')
