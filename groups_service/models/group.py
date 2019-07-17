@@ -12,7 +12,7 @@ from groups_service.db import DB
 
 
 class Groups(DB.Model):#pylint: disable=too-few-public-methods
-    """Implementation for groups entity"""
+    """Implementation for groups entity."""
     __tablename__ = 'groups'
     id = Column(Integer(), primary_key=True)
     title = Column(String(200), unique=True)
@@ -21,14 +21,14 @@ class Groups(DB.Model):#pylint: disable=too-few-public-methods
     date = Column(DateTime(), default=datetime.datetime.utcnow())
     assigned_to_forms = relationship('Forms', backref='group', lazy='dynamic')
 
-    def __init__(self, title, owner_id, members, assigned_to_forms):
+    def __init__(self, title, owner_id, members, assigned_to_forms=None):
         self.title = title
         self.owner_id = owner_id
         self.members = members
         self.assigned_to_forms = assigned_to_forms
 
 class Forms(DB.Model):#pylint: disable=too-few-public-methods
-    """Implementation table for form_id"""
+    """Implementation table for form."""
     __tablename__ = 'forms'
     id = Column(Integer(), primary_key=True)
     group_id = Column(Integer(), ForeignKey('groups.id'))

@@ -8,7 +8,7 @@ class FormsSchema(MA.Schema):# pylint: disable=too-few-public-methods
 
     @pre_load
     def convert_int_to_dict(self, data):#pylint: disable=no-self-use
-        '''convert_int_to_dict'''
+        """Converts into dict from int."""
         data = {'form_id': data}
         return data
 
@@ -24,13 +24,13 @@ class GroupsSchema(MA.Schema): # pylint: disable=too-few-public-methods
 
     @post_load
     def conver_list_by_str(self, data):#pylint: disable=no-self-use
-        '''conver_list_by_str'''
+        """Converts into list from string."""
         data['members'] = ",".join(map(str, data['members']))
         return data
 
     @pre_dump
     def convert_str_by_list(self, data):#pylint: disable=no-self-use
-        '''convert_str_by_list'''
+        """Converts into string from list."""
         data.members = list(map(int, data.members.split(',')))
         return data
 

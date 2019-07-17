@@ -1,8 +1,8 @@
-""" development config """
+""" Configuration for development."""
 from groups_service.config.base_config import Config
 
 
 class DevelopmentConfig(Config):
-    """ development config """
+    """Class with development config."""
     DEVELOPMENT = True
     DEBUG = True
