@@ -1,4 +1,4 @@
-'''Implementation groups_service'''
+"""Group view implementation."""
 from marshmallow import ValidationError, fields
 from flask_api import status
 from sqlalchemy.exc import IntegrityError
@@ -14,9 +14,12 @@ from groups_service.serializers import (
 from groups_service.models.group import Groups, Forms
 
 class GroupResource(Resource):
-    '''Group resource.'''
+    """Class GroupView implementation."""
     def post(self):#pylint: disable=no-self-use
-        '''method post'''
+        """
+        Post method for creating a new group.
+        :return: Response object or error message with status code.
+        """
         try:
             req = GROUP_SCHEMA.load(request.json).data
         except ValidationError as err:
@@ -32,10 +35,13 @@ class GroupResource(Resource):
         except IntegrityError as err:
             DB.session.rollback()
             return {'error': 'Already exist'}, status.HTTP_400_BAD_REQUEST
-        return {'message': 'Succsess'}, status.HTTP_201_CREATED
+        return Response(status=status.HTTP_201_CREATED)
 
     def get(self, group_id=None):# pylint: disable=no-self-use
-        '''Method get.'''
+        """
+        Get method for Group Service.
+        :return: requested groups with status code or error message with status code.
+        """
         resp = Response()
         url_args = {
             'groups': fields.List(fields.Integer(validate=lambda val: val > 0))
@@ -71,7 +77,10 @@ class GroupResource(Resource):
         return resp
 
     def put(self, group_id):#pylint: disable=no-self-use
-        '''Method put.'''
+        """
+        Put method for the group.
+        :return: Response object or error message with status code.
+        """
         updated_group = Groups.query.get(group_id)
         if updated_group is None:
             return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST

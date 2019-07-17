@@ -1,4 +1,4 @@
-'''Database connection.'''
+"""Database connection."""
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from groups_service import APP

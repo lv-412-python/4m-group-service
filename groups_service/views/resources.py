@@ -1,4 +1,4 @@
-"""API routes"""
+"""API routes."""
 from groups_service import API
 from .groups import (
     GroupResource
