@@ -64,7 +64,7 @@ class GroupResource(Resource):
             if group is None:
                 message = {'error': "Does not exist."}
                 resp = jsonify(message)
-                resp.status_code = status.HTTP_400_BAD_REQUEST
+                resp.status_code = status.HTTP_404_NOT_FOUND
             else:
                 message = GROUP_SCHEMA.dump(group).data
                 resp = jsonify(message)
@@ -83,7 +83,7 @@ class GroupResource(Resource):
         """
         updated_group = Groups.query.get(group_id)
         if updated_group is None:
-            return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
+            return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
         try:
             updated_data = GROUP_SCHEMA.load(request.json).data
         except ValidationError as err:
