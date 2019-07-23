@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from flask import request, jsonify, Response
 from flask_restful import Resource
 from webargs.flaskparser import parser
+
+from groups_service import APP
 from groups_service.db import DB
 from groups_service.serializers import (
     GROUP_SCHEMA,
@@ -23,6 +25,7 @@ class GroupResource(Resource):
         try:
             req = GROUP_SCHEMA.load(request.json).data
         except ValidationError as err:
+            APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
         forms_id = req.pop('assigned_to_forms', None)
         list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
@@ -33,6 +36,7 @@ class GroupResource(Resource):
         try:
             DB.session.commit()
         except IntegrityError as err:
+            APP.logger.error(err.args)
             DB.session.rollback()
             return {'error': 'Already exist'}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_201_CREATED)
@@ -87,6 +91,7 @@ class GroupResource(Resource):
         try:
             updated_data = GROUP_SCHEMA.load(request.json).data
         except ValidationError as err:
+            APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
         forms_id = updated_data.pop('assigned_to_forms', None)
         list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
