@@ -9,6 +9,8 @@ RUN apt update -y && \
 COPY ./ ./opt/groups-service-repo
 WORKDIR /opt/groups-service-repo
 
+EXPOSE 5050
+
 RUN pip3 install -r requirements.txt
 
 ENTRYPOINT ["python3"]
