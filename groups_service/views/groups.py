@@ -3,7 +3,7 @@ from marshmallow import ValidationError, fields
 from flask_api import status
 from sqlalchemy.exc import IntegrityError
 from flask import request, jsonify, Response
-from flask_restful import Resource
+from flask_restful import Resource, HTTPException
 from webargs.flaskparser import parser
 
 from groups_service import APP
@@ -46,11 +46,14 @@ class GroupResource(Resource):
         Get method for Group Service.
         :return: requested groups with status code or error message with status code.
         """
-        resp = Response()
         url_args = {
             'groups': fields.List(fields.Integer(validate=lambda val: val > 0))
         }
-        args = parser.parse(url_args, request)
+        try:
+            args = parser.parse(url_args, request)
+        except HTTPException as err:
+            APP.logger.error(err.args)
+            return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
         if args:
             title_groups = Groups.query.with_entities(
                 Groups.id, Groups.title
@@ -85,14 +88,16 @@ class GroupResource(Resource):
         Put method for the group.
         :return: Response object or error message with status code.
         """
-        updated_group = Groups.query.get(group_id)
-        if updated_group is None:
-            return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
         try:
             updated_data = GROUP_SCHEMA.load(request.json).data
         except ValidationError as err:
             APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
+
+        updated_group = Groups.query.get(group_id)
+        if updated_group is None:
+            return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
+
         forms_id = updated_data.pop('assigned_to_forms', None)
         list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
         if list_forms:
