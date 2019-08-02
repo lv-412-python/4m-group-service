@@ -95,4 +95,5 @@ class GroupResource(Resource):
         for key, value in updated_data.items():
             setattr(updated_group, key, value)
         DB.session.commit()
+
         return Response(status=status.HTTP_200_OK)
