@@ -2,7 +2,7 @@
 from marshmallow import ValidationError, fields
 from flask_api import status
 from sqlalchemy.exc import IntegrityError
-from flask import request, jsonify, Response
+from flask import request, Response
 from flask_restful import Resource, HTTPException
 from webargs.flaskparser import parser
 
@@ -46,42 +46,32 @@ class GroupResource(Resource):
         Get method for Group Service.
         :return: requested groups with status code or error message with status code.
         """
-        url_args = {
-            'groups': fields.List(fields.Integer(validate=lambda val: val > 0))
-        }
-        try:
-            args = parser.parse(url_args, request)
-        except HTTPException as err:
-            APP.logger.error(err.args)
-            return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
-        if args:
-            title_groups = Groups.query.with_entities(
-                Groups.id, Groups.title
-                ).filter(
-                    Groups.id.in_(args['groups'])
-                )
-            try:
-                res = WORKER_SCHEMA.dump(title_groups).data
-            except ValidationError as err:
-                return err.messages, status.HTTP_400_BAD_REQUEST
-            return res, status.HTTP_200_OK
-
         if group_id:
             group = Groups.query.get(group_id)
-            if group is None:
-                message = {'error': "Does not exist."}
-                resp = jsonify(message)
-                resp.status_code = status.HTTP_404_NOT_FOUND
-            else:
-                message = GROUP_SCHEMA.dump(group).data
-                resp = jsonify(message)
-                resp.status_code = status.HTTP_200_OK
+            result = GROUP_SCHEMA.dump(group).data
         else:
-            groups = Groups.query.all()
-            message = GROUPS_SCHEMA.dump(groups).data
-            resp = jsonify(message)
-            resp.status_code = status.HTTP_200_OK
-        return resp
+            url_args = {
+                'groups': fields.List(fields.Integer(validate=lambda val: val > 0)),
+                'owner': fields.List(fields.Integer(validate=lambda val: val > 0))
+            }
+            try:
+                args = parser.parse(url_args, request)
+            except HTTPException as err:
+                APP.logger.error(err.args)
+                return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
+            if args.get('groups'):
+                title_groups = Groups.query.with_entities(
+                    Groups.id, Groups.title
+                    ).filter(
+                        Groups.id.in_(args['groups'])
+                    )
+                result = WORKER_SCHEMA.dump(title_groups).data
+            else:
+                owner_groups = Groups.query.filter(Groups.owner_id.in_(args['owner']))
+                result = GROUPS_SCHEMA.dump(owner_groups).data
+
+        return (result, status.HTTP_200_OK) if result else \
+               ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
     def put(self, group_id):#pylint: disable=no-self-use
         """
