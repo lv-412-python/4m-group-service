@@ -38,6 +38,13 @@ class WorkerSchema(MA.Schema):
     """Implementation of Worker schema."""
     id = fields.Integer()
     title = fields.String()
+    members = fields.List(fields.Integer())
+
+    @pre_dump
+    def convert_str_by_list(self, data):#pylint: disable=no-self-use
+        """Converts into string from list."""
+        data.members = list(map(int, data.members.split(',')))
+        return data
 
 
 

@@ -60,10 +60,8 @@ class GroupResource(Resource):
                 APP.logger.error(err.args)
                 return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
             if args.get('groups'):
-                title_groups = Groups.query.with_entities(
-                    Groups.id, Groups.title
-                    ).filter(
-                        Groups.id.in_(args['groups'])
+                title_groups = Groups.query.filter(
+                    Groups.id.in_(args['groups'])
                     )
                 result = WORKER_SCHEMA.dump(title_groups).data
             else:
