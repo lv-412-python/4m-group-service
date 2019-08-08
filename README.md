@@ -7,6 +7,9 @@ This is the source code of the groups service, part of 4m project. This service 
 * Flask (1.0.3)
 * PostgreSQL (10.9)
 
+## ER diagram
+![alt_text](diagrams/4m_groups.png)
+
 ## Install
 For the next steps of service installation, you will need setup of Ubuntu 18.04
 
