@@ -31,6 +31,9 @@ class GroupResource(Resource):
         list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
         if list_forms:
             req.update({'assigned_to_forms' : list_forms})
+        else:
+            req.update({'assigned_to_forms' : []})
+
         new_group = Groups(**req)
         DB.session.add(new_group)
         try:
