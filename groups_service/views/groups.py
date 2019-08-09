@@ -90,6 +90,9 @@ class GroupResource(Resource):
         list_forms = [Forms(form_id.get('form_id')) for form_id in forms_id] if forms_id else None
         if list_forms:
             updated_data.update({'assigned_to_forms' : list_forms})
+        else:
+            updated_data.update({'assigned_to_forms' : []})
+
         for key, value in updated_data.items():
             setattr(updated_group, key, value)
         DB.session.commit()
