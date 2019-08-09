@@ -25,7 +25,8 @@ class GroupsSchema(MA.Schema): # pylint: disable=too-few-public-methods
     @post_load
     def conver_list_by_str(self, data):#pylint: disable=no-self-use
         """Converts into list from string."""
-        data['members'] = ",".join(map(str, data['members']))
+        if data.get('members'):
+            data['members'] = ",".join(map(str, data['members']))
         return data
 
     @pre_dump
