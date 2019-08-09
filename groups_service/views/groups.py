@@ -51,7 +51,10 @@ class GroupResource(Resource):
         """
         if group_id:
             group = Groups.query.get(group_id)
-            result = GROUP_SCHEMA.dump(group).data
+            try:
+                result = GROUP_SCHEMA.dump(group).data
+            except AttributeError:
+                return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
         else:
             url_args = {
                 'groups': fields.List(fields.Integer(validate=lambda val: val > 0)),
