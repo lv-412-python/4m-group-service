@@ -57,7 +57,7 @@ class GroupResource(Resource):
                 return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
         else:
             url_args = {
-                'groups': fields.List(fields.Integer(validate=lambda val: val > 0)),
+                'group_id': fields.List(fields.Integer(validate=lambda val: val > 0)),
                 'owner': fields.List(fields.Integer(validate=lambda val: val > 0))
             }
             try:
@@ -65,9 +65,9 @@ class GroupResource(Resource):
             except HTTPException as err:
                 APP.logger.error(err.args)
                 return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
-            if args.get('groups'):
+            if args.get('group_id'):
                 title_groups = Groups.query.filter(
-                    Groups.id.in_(args['groups'])
+                    Groups.id.in_(args['group_id'])
                     )
                 result = WORKER_SCHEMA.dump(title_groups).data
             else:
