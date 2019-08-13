@@ -51,14 +51,12 @@ class GroupResource(Resource):
         """
         if group_id:
             group = Groups.query.get(group_id)
-            try:
-                result = GROUP_SCHEMA.dump(group).data
-            except AttributeError:
-                return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
+            result = GROUP_SCHEMA.dump(group).data
         else:
             url_args = {
-                'group_id': fields.List(fields.Integer(validate=lambda val: val > 0)),
-                'owner': fields.List(fields.Integer(validate=lambda val: val > 0))
+                'groups': fields.List(fields.Integer(validate=lambda val: val > 0)),
+                'owner': fields.List(fields.Integer(validate=lambda val: val > 0)),
+                'user_id': fields.Integer(validate=lambda val: val > 0)
             }
             try:
                 args = parser.parse(url_args, request)
@@ -70,9 +68,13 @@ class GroupResource(Resource):
                     Groups.id.in_(args['group_id'])
                     )
                 result = WORKER_SCHEMA.dump(title_groups).data
-            else:
+            elif args.get('owner'):
                 owner_groups = Groups.query.filter(Groups.owner_id.in_(args['owner']))
                 result = GROUPS_SCHEMA.dump(owner_groups).data
+            else:
+                search = "%{}%".format(args['user_id'])
+                forms_to_user = Groups.query.filter(Groups.members.match(search)).first()
+                result = GROUP_SCHEMA.dump(forms_to_user).data
 
         return (result, status.HTTP_200_OK) if result else \
                ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
