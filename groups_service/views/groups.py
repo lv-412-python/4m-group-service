@@ -75,6 +75,8 @@ class GroupResource(Resource):
                 search = "%{}%".format(args['user_id'])
                 forms_to_user = Groups.query.filter(Groups.members.match(search)).first()
                 result = GROUP_SCHEMA.dump(forms_to_user).data
+            else:
+                return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
 
         return (result, status.HTTP_200_OK) if result else \
                ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
