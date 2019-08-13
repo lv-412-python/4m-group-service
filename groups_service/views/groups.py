@@ -54,7 +54,7 @@ class GroupResource(Resource):
             result = GROUP_SCHEMA.dump(group).data
         else:
             url_args = {
-                'groups': fields.List(fields.Integer(validate=lambda val: val > 0)),
+                'group_id': fields.List(fields.Integer(validate=lambda val: val > 0)),
                 'owner': fields.List(fields.Integer(validate=lambda val: val > 0)),
                 'user_id': fields.Integer(validate=lambda val: val > 0)
             }
@@ -71,7 +71,7 @@ class GroupResource(Resource):
             elif args.get('owner'):
                 owner_groups = Groups.query.filter(Groups.owner_id.in_(args['owner']))
                 result = GROUPS_SCHEMA.dump(owner_groups).data
-            else:
+            elif args.get('user_id'):
                 search = "%{}%".format(args['user_id'])
                 forms_to_user = Groups.query.filter(Groups.members.match(search)).first()
                 result = GROUP_SCHEMA.dump(forms_to_user).data
