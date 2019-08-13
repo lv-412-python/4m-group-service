@@ -32,7 +32,8 @@ class GroupsSchema(MA.Schema): # pylint: disable=too-few-public-methods
     @pre_dump
     def convert_str_by_list(self, data):#pylint: disable=no-self-use
         """Converts into string from list."""
-        data.members = list(map(int, data.members.split(',')))
+        if data:
+            data.members = list(map(int, data.members.split(',')))
         return data
 
 class WorkerSchema(MA.Schema):
