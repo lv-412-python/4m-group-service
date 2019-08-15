@@ -15,8 +15,20 @@ from groups_service.serializers import (
 )
 from groups_service.models.group import Groups, Forms
 
+
+def check_authority(view):
+    """Decorator for resources"""
+    def func_wrapper(*args, **kwargs):
+        """wrapper"""
+        if request.cookies['admin'] == 'False' and request.method != 'GET':
+            return {"error": "Forbidden."}, status.HTTP_403_FORBIDDEN
+        return view(*args, **kwargs)
+    return func_wrapper
+
+
 class GroupResource(Resource):
     """Class GroupView implementation."""
+    @check_authority
     def post(self):#pylint: disable=no-self-use
         """
         Post method for creating a new group.
@@ -44,6 +56,7 @@ class GroupResource(Resource):
             return {'error': 'Already exist'}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_201_CREATED)
 
+    @check_authority
     def get(self, group_id=None):# pylint: disable=no-self-use
         """
         Get method for Group Service.
@@ -81,6 +94,7 @@ class GroupResource(Resource):
         return (result, status.HTTP_200_OK) if result else \
                ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
+    @check_authority
     def put(self, group_id):#pylint: disable=no-self-use
         """
         Put method for the group.
